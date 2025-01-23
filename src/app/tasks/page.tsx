@@ -88,6 +88,11 @@ interface DataItem {
   smart_valuation?: "低估" | "合理" | "高估"
 }
 
+interface ReviewTask {
+  taskId: string
+  createdAt: string
+}
+
 const STOCKS = [
   { value: "AAPL", label: "Apple Inc." },
   { value: "MSFT", label: "Microsoft Corporation" },
@@ -428,12 +433,12 @@ export default function TasksPage() {
               data: resultData
             }
 
-            const currentReviews = JSON.parse(localStorage.getItem("reviews") || "[]")
-            const isDuplicate = currentReviews.some((review: any) => 
-              review.taskId === task.id && 
+            const currentReviews = JSON.parse(localStorage.getItem("reviews") || "[]") as ReviewTask[]
+            const isDuplicate = currentReviews.some((review: ReviewTask) =>
+              review.taskId === task.id &&
               new Date(review.createdAt).getTime() === new Date(reviewTask.createdAt).getTime()
             )
-            
+
             if (!isDuplicate) {
               localStorage.setItem("reviews", JSON.stringify([...currentReviews, reviewTask]))
             }
@@ -486,65 +491,6 @@ export default function TasksPage() {
 
   const handleDeleteTask = (taskId: string) => {
     setTasks(prev => prev.filter(task => task.id !== taskId))
-  }
-
-  const renderDataDetails = (item: DataItem) => {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <h4 className="font-medium mb-2">估值指标</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">市盈率 (PE)</span>
-                <span>{item.pe?.toFixed(2)} ({item.pe_percentile?.toFixed(1)}%)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">市净率 (PB)</span>
-                <span>{item.pb?.toFixed(2)} ({item.pb_percentile?.toFixed(1)}%)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">市销率 (PS)</span>
-                <span>{item.ps?.toFixed(2)} ({item.ps_percentile?.toFixed(1)}%)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">股息率</span>
-                <span>{item.dividend_yield?.toFixed(2)}% ({item.dividend_yield_percentile?.toFixed(1)}%)</span>
-              </div>
-            </div>
-          </div>
-          {item.market_cap && (
-            <div>
-              <h4 className="font-medium mb-2">交易数据</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">市值</span>
-                  <span>{(item.market_cap / 1000000000).toFixed(2)}B</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">成交量</span>
-                  <span>{(item.volume || 0).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">营收增长</span>
-                  <span>{item.revenue_yoy?.toFixed(2)}%</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="flex justify-between items-center p-2 bg-muted rounded">
-          <span className="font-medium">智能估值</span>
-          <Badge variant={
-            item.smart_valuation === "低估" ? "success" :
-            item.smart_valuation === "高估" ? "destructive" :
-            "secondary"
-          }>
-            {item.smart_valuation}
-          </Badge>
-        </div>
-      </div>
-    )
   }
 
   return (

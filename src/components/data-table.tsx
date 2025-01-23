@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { DataPoint } from '@/types/financial'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -15,7 +15,7 @@ export function DataTable({ type }: DataTableProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/data?type=${type}&days=30`)
@@ -23,11 +23,12 @@ export function DataTable({ type }: DataTableProps) {
       setData(json.data)
       setError(null)
     } catch (err) {
+      console.log(err);
       setError('Failed to fetch data')
     } finally {
       setLoading(false)
     }
-  }
+  }, [type])
 
   const handleFixData = async (id: string) => {
     try {
@@ -39,14 +40,14 @@ export function DataTable({ type }: DataTableProps) {
         body: JSON.stringify({ id, status: 'fixed' }),
       })
       await fetchData()
-    } catch (err) {
+    } catch  {
       setError('Failed to fix data')
     }
   }
 
   useEffect(() => {
     fetchData()
-  }, [type])
+  }, [type,fetchData])
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>
@@ -100,7 +101,7 @@ export function DataTable({ type }: DataTableProps) {
             {data.map((item) => (
               <tr key={item.id} className="border-b">
                 <td className="p-4">{item.timestamp}</td>
-                <td className="p-4">{(item.data as any).symbol}</td>
+                <td className="p-4">{(item.data).symbol}</td>
                 <td className="p-4">{getStatusBadge(item.status)}</td>
                 <td className="p-4">
                   {item.status === 'anomaly' && (
