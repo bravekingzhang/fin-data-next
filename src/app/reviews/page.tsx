@@ -27,6 +27,18 @@ interface DataItem {
   change: number
   isAbnormal: boolean
   correctedValue?: number
+  pe?: number
+  pe_percentile?: number
+  pb?: number
+  pb_percentile?: number
+  ps?: number
+  ps_percentile?: number
+  dividend_yield?: number
+  dividend_yield_percentile?: number
+  market_cap?: number
+  volume?: number
+  revenue_yoy?: number
+  smart_valuation?: "低估" | "合理" | "高估"
 }
 
 interface ReviewTask {
@@ -134,6 +146,65 @@ export default function ReviewsPage() {
     }
   }
 
+  const renderDataDetails = (item: DataItem) => {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <h4 className="font-medium mb-2">估值指标</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">市盈率 (PE)</span>
+                <span>{item.pe?.toFixed(2)} ({item.pe_percentile?.toFixed(1)}%)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">市净率 (PB)</span>
+                <span>{item.pb?.toFixed(2)} ({item.pb_percentile?.toFixed(1)}%)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">市销率 (PS)</span>
+                <span>{item.ps?.toFixed(2)} ({item.ps_percentile?.toFixed(1)}%)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">股息率</span>
+                <span>{item.dividend_yield?.toFixed(2)}% ({item.dividend_yield_percentile?.toFixed(1)}%)</span>
+              </div>
+            </div>
+          </div>
+          {item.market_cap && (
+            <div>
+              <h4 className="font-medium mb-2">交易数据</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">市值</span>
+                  <span>{(item.market_cap / 1000000000).toFixed(2)}B</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">成交量</span>
+                  <span>{(item.volume || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">营收增长</span>
+                  <span>{item.revenue_yoy?.toFixed(2)}%</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-between items-center p-2 bg-muted rounded">
+          <span className="font-medium">智能估值</span>
+          <Badge variant={
+            item.smart_valuation === "低估" ? "success" :
+            item.smart_valuation === "高估" ? "destructive" :
+            "secondary"
+          }>
+            {item.smart_valuation}
+          </Badge>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -186,32 +257,17 @@ export default function ReviewsPage() {
       </div>
 
       <Dialog open={isReviewing} onOpenChange={setIsReviewing}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>数据审批</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 flex-1 overflow-y-auto pr-6">
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="font-semibold">{selectedTask?.taskName}</h3>
                 <p className="text-sm text-muted-foreground">
                   创建时间: {selectedTask?.createdAt}
                 </p>
-              </div>
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={handleRejectTask}
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  拒绝
-                </Button>
-                <Button
-                  onClick={handleApproveTask}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  通过
-                </Button>
               </div>
             </div>
 
@@ -281,6 +337,35 @@ export default function ReviewsPage() {
               </table>
             </div>
 
+            {selectedTask?.data.map((item) => (
+              <div key={item.symbol} className="p-4 border rounded-lg">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="font-semibold">{item.name}</h3>
+                    <p className="text-sm text-muted-foreground">{item.symbol}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "text-lg font-medium",
+                      item.change > 0 ? "text-green-600" : "text-red-600"
+                    )}>
+                      {item.value.toFixed(2)}
+                      <span className="ml-2 text-sm">
+                        {item.change > 0 ? "+" : ""}{item.change.toFixed(2)}%
+                      </span>
+                    </div>
+                    {item.isAbnormal && (
+                      <Badge variant="destructive">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        异常
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                {renderDataDetails(item)}
+              </div>
+            ))}
+
             <div className="space-y-2">
               <Label>审批意见</Label>
               <Input
@@ -289,6 +374,27 @@ export default function ReviewsPage() {
                 placeholder="请输入审批意见"
               />
             </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setIsReviewing(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleRejectTask()}
+              disabled={!reviewComment}
+            >
+              拒绝
+            </Button>
+            <Button
+              onClick={() => handleApproveTask()}
+              disabled={!reviewComment}
+            >
+              通过
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

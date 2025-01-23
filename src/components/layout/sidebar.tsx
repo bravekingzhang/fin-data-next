@@ -3,7 +3,8 @@
 import { cn } from "@/lib/utils"
 import { 
   LayoutDashboard, 
-  ListTodo, 
+  ListTodo,
+  ClipboardCheck,
   Settings,
 } from "lucide-react"
 import Link from "next/link"
@@ -24,6 +25,12 @@ export function Sidebar({ className }: { className?: string }) {
       icon: ListTodo,
       href: "/tasks",
       color: "text-violet-500"
+    },
+    {
+      label: "数据审批",
+      icon: ClipboardCheck,
+      href: "/reviews",
+      color: "text-green-500"
     },
     {
       label: "系统设置",

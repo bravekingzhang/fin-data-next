@@ -72,6 +72,18 @@ interface DataItem {
   change: number
   isAbnormal: boolean
   correctedValue?: number
+  pe?: number
+  pe_percentile?: number
+  pb?: number
+  pb_percentile?: number
+  ps?: number
+  ps_percentile?: number
+  dividend_yield?: number
+  dividend_yield_percentile?: number
+  market_cap?: number
+  volume?: number
+  revenue_yoy?: number
+  smart_valuation?: "低估" | "合理" | "高估"
 }
 
 const STOCKS = [
@@ -81,6 +93,20 @@ const STOCKS = [
   { value: "AMZN", label: "Amazon.com, Inc." },
   { value: "META", label: "Meta Platforms, Inc." },
   { value: "TSLA", label: "Tesla, Inc." },
+  { value: "NVDA", label: "NVIDIA Corporation" },
+  { value: "JPM", label: "JPMorgan Chase & Co." },
+  { value: "BAC", label: "Bank of America Corp." },
+  { value: "WMT", label: "Walmart Inc." },
+  { value: "PG", label: "Procter & Gamble Co." },
+  { value: "JNJ", label: "Johnson & Johnson" },
+  { value: "UNH", label: "UnitedHealth Group Inc." },
+  { value: "HD", label: "The Home Depot, Inc." },
+  { value: "MA", label: "Mastercard Inc." },
+  { value: "INTC", label: "Intel Corporation" },
+  { value: "VZ", label: "Verizon Communications Inc." },
+  { value: "DIS", label: "The Walt Disney Company" },
+  { value: "ADBE", label: "Adobe Inc." },
+  { value: "NFLX", label: "Netflix, Inc." }
 ]
 
 export default function TasksPage() {
@@ -123,15 +149,72 @@ export default function TasksPage() {
       }
     },
     {
-      id: "stock-task",
-      name: "股票数据",
+      id: "stock-task-tech",
+      name: "科技股数据",
       type: "stock",
       status: "stopped",
       lastRun: "-",
       nextRun: "-",
       config: {
         interval: 60,
-        symbols: ["AAPL", "GOOGL", "MSFT"],
+        symbols: ["AAPL", "MSFT", "GOOGL", "META", "NVDA", "INTC", "ADBE"],
+        alertContacts: [
+          {
+            name: "默认用户",
+            email: "default@example.com",
+            type: "email"
+          }
+        ]
+      }
+    },
+    {
+      id: "stock-task-finance",
+      name: "金融股数据",
+      type: "stock",
+      status: "stopped",
+      lastRun: "-",
+      nextRun: "-",
+      config: {
+        interval: 60,
+        symbols: ["JPM", "BAC", "MA"],
+        alertContacts: [
+          {
+            name: "默认用户",
+            email: "default@example.com",
+            type: "email"
+          }
+        ]
+      }
+    },
+    {
+      id: "stock-task-retail",
+      name: "零售消费数据",
+      type: "stock",
+      status: "stopped",
+      lastRun: "-",
+      nextRun: "-",
+      config: {
+        interval: 60,
+        symbols: ["AMZN", "WMT", "HD", "DIS", "NFLX"],
+        alertContacts: [
+          {
+            name: "默认用户",
+            email: "default@example.com",
+            type: "email"
+          }
+        ]
+      }
+    },
+    {
+      id: "stock-task-healthcare",
+      name: "医疗保健数据",
+      type: "stock",
+      status: "stopped",
+      lastRun: "-",
+      nextRun: "-",
+      config: {
+        interval: 60,
+        symbols: ["JNJ", "UNH", "PG"],
         alertContacts: [
           {
             name: "默认用户",
@@ -225,17 +308,77 @@ export default function TasksPage() {
   }
 
   const generateMockData = (type: string, symbol?: string): DataItem => {
-    const baseValue = Math.random() * 1000
-    const change = (Math.random() - 0.5) * 10
-    const isAbnormal = Math.random() < 0.2
+    const baseValue = type === "industry" ? Math.random() * 5000 + 3000 :
+                     type === "etf" ? Math.random() * 100 + 50 :
+                     Math.random() * 1000 + 100
 
-    return {
+    const change = (Math.random() - 0.5) * (
+      type === "industry" ? 5 :
+      type === "etf" ? 3 :
+      10
+    )
+
+    const isAbnormal = Math.random() < (
+      type === "industry" ? 0.1 :
+      type === "etf" ? 0.15 :
+      0.2
+    )
+
+    let name = ""
+    if (symbol) {
+      const stock = STOCKS.find(s => s.value === symbol)
+      name = stock ? stock.label : symbol
+    } else if (type === "industry") {
+      const industries = ["科技", "金融", "医疗", "消费", "能源", "工业", "原材料", "公用事业", "房地产", "通信"]
+      name = industries[Math.floor(Math.random() * industries.length)] + "行业指数"
+    } else if (type === "etf") {
+      const etfTypes = ["科技", "医疗", "金融", "消费", "能源", "中小企业", "创新", "价值", "成长", "红利"]
+      name = etfTypes[Math.floor(Math.random() * etfTypes.length)] + "ETF"
+    }
+
+    const generatePercentile = () => Math.random() * 100
+    const pe = type === "industry" ? Math.random() * 30 + 10 : Math.random() * 50 + 15
+    const pb = type === "industry" ? Math.random() * 5 + 1 : Math.random() * 10 + 2
+    const ps = type === "industry" ? Math.random() * 3 + 1 : Math.random() * 15 + 3
+    const dividend_yield = Math.random() * 5
+
+    const calculateSmartValuation = (pe_percentile: number, pb_percentile: number): "低估" | "合理" | "高估" => {
+      const avgPercentile = (pe_percentile + pb_percentile) / 2
+      if (avgPercentile < 30) return "低估"
+      if (avgPercentile > 70) return "高估"
+      return "合理"
+    }
+
+    const pe_percentile = generatePercentile()
+    const pb_percentile = generatePercentile()
+
+    const baseData: DataItem = {
       symbol: symbol || `${type.toUpperCase()}-${Math.floor(Math.random() * 100)}`,
-      name: `${type} ${symbol || Math.floor(Math.random() * 100)}`,
+      name,
       value: baseValue,
       change,
-      isAbnormal
+      isAbnormal,
+      pe,
+      pe_percentile,
+      pb,
+      pb_percentile,
+      ps,
+      ps_percentile: generatePercentile(),
+      dividend_yield,
+      dividend_yield_percentile: generatePercentile(),
+      smart_valuation: calculateSmartValuation(pe_percentile, pb_percentile)
     }
+
+    if (type === "stock") {
+      return {
+        ...baseData,
+        market_cap: Math.random() * 1000000000000,
+        volume: Math.floor(Math.random() * 10000000),
+        revenue_yoy: (Math.random() - 0.3) * 100,
+      }
+    }
+
+    return baseData
   }
 
   const handleStartTask = (taskId: string) => {
@@ -272,8 +415,7 @@ export default function TasksPage() {
         clearInterval(interval)
         setTasks(prev => prev.map(task => {
           if (task.id === taskId) {
-            // 创建审批任务
-            const reviewId = `review-${Date.now()}`
+            const reviewId = `review-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
             const reviewTask = {
               id: reviewId,
               taskId: task.id,
@@ -284,9 +426,15 @@ export default function TasksPage() {
               data: resultData
             }
 
-            // 将审批任务数据保存到本地存储
-            const reviews = JSON.parse(localStorage.getItem("reviews") || "[]")
-            localStorage.setItem("reviews", JSON.stringify([...reviews, reviewTask]))
+            const currentReviews = JSON.parse(localStorage.getItem("reviews") || "[]")
+            const isDuplicate = currentReviews.some((review: any) => 
+              review.taskId === task.id && 
+              new Date(review.createdAt).getTime() === new Date(reviewTask.createdAt).getTime()
+            )
+            
+            if (!isDuplicate) {
+              localStorage.setItem("reviews", JSON.stringify([...currentReviews, reviewTask]))
+            }
 
             return {
               ...task,
@@ -336,6 +484,65 @@ export default function TasksPage() {
 
   const handleDeleteTask = (taskId: string) => {
     setTasks(prev => prev.filter(task => task.id !== taskId))
+  }
+
+  const renderDataDetails = (item: DataItem) => {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <h4 className="font-medium mb-2">估值指标</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">市盈率 (PE)</span>
+                <span>{item.pe?.toFixed(2)} ({item.pe_percentile?.toFixed(1)}%)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">市净率 (PB)</span>
+                <span>{item.pb?.toFixed(2)} ({item.pb_percentile?.toFixed(1)}%)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">市销率 (PS)</span>
+                <span>{item.ps?.toFixed(2)} ({item.ps_percentile?.toFixed(1)}%)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">股息率</span>
+                <span>{item.dividend_yield?.toFixed(2)}% ({item.dividend_yield_percentile?.toFixed(1)}%)</span>
+              </div>
+            </div>
+          </div>
+          {item.market_cap && (
+            <div>
+              <h4 className="font-medium mb-2">交易数据</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">市值</span>
+                  <span>{(item.market_cap / 1000000000).toFixed(2)}B</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">成交量</span>
+                  <span>{(item.volume || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">营收增长</span>
+                  <span>{item.revenue_yoy?.toFixed(2)}%</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-between items-center p-2 bg-muted rounded">
+          <span className="font-medium">智能估值</span>
+          <Badge variant={
+            item.smart_valuation === "低估" ? "success" :
+            item.smart_valuation === "高估" ? "destructive" :
+            "secondary"
+          }>
+            {item.smart_valuation}
+          </Badge>
+        </div>
+      </div>
+    )
   }
 
   return (
