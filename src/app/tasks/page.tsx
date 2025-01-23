@@ -11,6 +11,7 @@ import {
   Plus,
   Search,
   UserPlus,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +36,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
@@ -716,33 +718,56 @@ export default function TasksPage() {
             {selectedType === "stock" && (
               <div className="space-y-2">
                 <Label>选择股票</Label>
-                <Command>
+                <Command className="border rounded-md">
                   <CommandInput placeholder="搜索股票..." />
-                  <CommandEmpty>未找到股票</CommandEmpty>
-                  <CommandGroup>
-                    {STOCKS.map(stock => (
-                      <CommandItem
-                        key={stock.value}
-                        onSelect={() => {
-                          setSelectedStocks(prev => {
-                            if (prev.includes(stock.value)) {
-                              return prev.filter(s => s !== stock.value)
-                            }
-                            return [...prev, stock.value]
-                          })
-                        }}
-                      >
-                        <div className={cn(
-                          "mr-2",
-                          selectedStocks.includes(stock.value) ? "text-primary" : ""
-                        )}>
-                          {selectedStocks.includes(stock.value) ? "✓" : ""}
-                        </div>
-                        {stock.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                  <CommandList>
+                    <CommandEmpty>未找到股票</CommandEmpty>
+                    <CommandGroup>
+                      {STOCKS.map(stock => (
+                        <CommandItem
+                          key={stock.value}
+                          onSelect={() => {
+                            setSelectedStocks(prev => {
+                              const isSelected = prev.includes(stock.value);
+                              if (isSelected) {
+                                return prev.filter(s => s !== stock.value);
+                              }
+                              return [...prev, stock.value];
+                            });
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "flex h-4 w-4 items-center justify-center border rounded",
+                              selectedStocks.includes(stock.value) ? "bg-primary border-primary text-primary-foreground" : "border-input"
+                            )}>
+                              {selectedStocks.includes(stock.value) && "✓"}
+                            </div>
+                            <span>{stock.label}</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
                 </Command>
+                {selectedStocks.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedStocks.map(stockValue => {
+                      const stock = STOCKS.find(s => s.value === stockValue);
+                      return (
+                        <Badge
+                          key={stockValue}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => setSelectedStocks(prev => prev.filter(s => s !== stockValue))}
+                        >
+                          {stock?.label}
+                          <X className="w-3 h-3 ml-1" />
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
