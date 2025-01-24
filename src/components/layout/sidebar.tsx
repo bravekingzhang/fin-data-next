@@ -1,8 +1,8 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   ListTodo,
   ClipboardCheck,
   Settings,
@@ -45,7 +45,7 @@ export function Sidebar({ className }: { className?: string }) {
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold">
-            金融数据平台
+            Akulaku Financial Data Platform
           </h2>
           <div className="space-y-1">
             {routes.map((route) => (
@@ -68,4 +68,4 @@ export function Sidebar({ className }: { className?: string }) {
       </div>
     </div>
   )
-} 
+}

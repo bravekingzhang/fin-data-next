@@ -79,7 +79,7 @@ export default function DashboardPage() {
   const getFilteredData = (data: DataPoint[]) => {
     return data.filter(item => {
       if (symbolFilter !== "all" && item.symbol !== symbolFilter) return false
-      if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
+      if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
           !item.symbol.toLowerCase().includes(searchQuery.toLowerCase())) return false
       return true
     })
@@ -87,7 +87,7 @@ export default function DashboardPage() {
 
   const handleExportData = (data: DataPoint[]) => {
     const filteredData = getFilteredData(data)
-    
+
     // 准备CSV数据
     const headers = ['代码', '名称', '最新值', '涨跌幅', '成交量', '换手率', '更新时间']
     const csvContent = [
@@ -106,7 +106,7 @@ export default function DashboardPage() {
     // 创建Blob对象
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
-    
+
     // 创建下载链接
     const link = document.createElement('a')
     link.href = url
@@ -294,7 +294,7 @@ export default function DashboardPage() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">数据概览</h1>
+        <h1 className="text-3xl font-bold">Data Overview</h1>
         <Button
           variant="outline"
           onClick={() => {
@@ -314,16 +314,16 @@ export default function DashboardPage() {
           }}
         >
           <Download className="w-4 h-4 mr-2" />
-          导出全部数据
+          Export All Data
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex justify-between items-center mb-6">
           <TabsList>
-            <TabsTrigger value="industry">行业指数</TabsTrigger>
-            <TabsTrigger value="etf">ETF数据</TabsTrigger>
-            <TabsTrigger value="stock">股票数据</TabsTrigger>
+            <TabsTrigger value="industry">Industry Index</TabsTrigger>
+            <TabsTrigger value="etf">ETF Data</TabsTrigger>
+            <TabsTrigger value="stock">Stock Data</TabsTrigger>
           </TabsList>
 
           <div className="flex gap-4">

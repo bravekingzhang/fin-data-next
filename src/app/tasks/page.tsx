@@ -116,12 +116,38 @@ const STOCKS = [
   { value: "NFLX", label: "Netflix, Inc." }
 ]
 
+const MOCK_INDUSTRY_DATA = [
+  { symbol: "TECH", name: "科技行业", value: 2345.67, change: 2.3 },
+  { symbol: "FIN", name: "金融行业", value: 1876.54, change: -1.2 },
+  { symbol: "HEALTH", name: "医疗健康", value: 3456.78, change: 1.5 },
+  { symbol: "CONS", name: "消费品", value: 1234.56, change: 0.8 },
+  { symbol: "ENERGY", name: "能源行业", value: 2789.12, change: -0.7 },
+  { symbol: "MATER", name: "原材料", value: 1567.89, change: 1.1 },
+  { symbol: "INDUS", name: "工业制造", value: 2123.45, change: -0.5 },
+  { symbol: "REAL", name: "房地产", value: 1890.23, change: -1.8 },
+  { symbol: "TELE", name: "电信服务", value: 1678.90, change: 0.6 },
+  { symbol: "UTIL", name: "公用事业", value: 1456.78, change: 0.3 }
+]
+
+const MOCK_ETF_DATA = [
+  { symbol: "SPY", name: "标普500ETF", value: 456.78, change: 1.2 },
+  { symbol: "QQQ", name: "纳斯达克100", value: 378.90, change: 2.1 },
+  { symbol: "IWM", name: "罗素2000", value: 189.45, change: -0.8 },
+  { symbol: "EEM", name: "新兴市场", value: 42.31, change: -1.5 },
+  { symbol: "VGK", name: "欧洲股市", value: 58.67, change: 0.7 },
+  { symbol: "FXI", name: "中国大型股", value: 28.45, change: 1.6 },
+  { symbol: "GLD", name: "黄金ETF", value: 178.90, change: -0.4 },
+  { symbol: "TLT", name: "长期国债", value: 98.76, change: -0.9 },
+  { symbol: "VNQ", name: "房地产ETF", value: 84.52, change: -1.1 },
+  { symbol: "XLE", name: "能源行业ETF", value: 76.89, change: 0.5 }
+]
+
 export default function TasksPage() {
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: "industry-task",
-      name: "行业指数数据",
+      name: "Industry Index Data",
       type: "industry",
       status: "stopped",
       lastRun: "-",
@@ -130,7 +156,7 @@ export default function TasksPage() {
         interval: 60,
         alertContacts: [
           {
-            name: "默认用户",
+            name: "Default User",
             email: "default@example.com",
             type: "email"
           }
@@ -139,7 +165,7 @@ export default function TasksPage() {
     },
     {
       id: "etf-task",
-      name: "ETF数据",
+      name: "ETF Data",
       type: "etf",
       status: "stopped",
       lastRun: "-",
@@ -148,7 +174,7 @@ export default function TasksPage() {
         interval: 60,
         alertContacts: [
           {
-            name: "默认用户",
+            name: "Default User",
             email: "default@example.com",
             type: "email"
           }
@@ -157,7 +183,7 @@ export default function TasksPage() {
     },
     {
       id: "stock-task-tech",
-      name: "科技股数据",
+      name: "Tech Stock Data",
       type: "stock",
       status: "stopped",
       lastRun: "-",
@@ -167,7 +193,7 @@ export default function TasksPage() {
         symbols: ["AAPL", "MSFT", "GOOGL", "META", "NVDA", "INTC", "ADBE"],
         alertContacts: [
           {
-            name: "默认用户",
+            name: "Default User",
             email: "default@example.com",
             type: "email"
           }
@@ -176,7 +202,7 @@ export default function TasksPage() {
     },
     {
       id: "stock-task-finance",
-      name: "金融股数据",
+      name: "Finance Stock Data",
       type: "stock",
       status: "stopped",
       lastRun: "-",
@@ -186,7 +212,7 @@ export default function TasksPage() {
         symbols: ["JPM", "BAC", "MA"],
         alertContacts: [
           {
-            name: "默认用户",
+            name: "Default User",
             email: "default@example.com",
             type: "email"
           }
@@ -195,7 +221,7 @@ export default function TasksPage() {
     },
     {
       id: "stock-task-retail",
-      name: "零售消费数据",
+      name: "Retail Consumer Data",
       type: "stock",
       status: "stopped",
       lastRun: "-",
@@ -214,7 +240,7 @@ export default function TasksPage() {
     },
     {
       id: "stock-task-healthcare",
-      name: "医疗保健数据",
+      name: "Healthcare Data",
       type: "stock",
       status: "stopped",
       lastRun: "-",
@@ -224,7 +250,7 @@ export default function TasksPage() {
         symbols: ["JNJ", "UNH", "PG"],
         alertContacts: [
           {
-            name: "默认用户",
+            name: "Default User",
             email: "default@example.com",
             type: "email"
           }
@@ -241,7 +267,7 @@ export default function TasksPage() {
   const [updateInterval, setUpdateInterval] = useState<number>(5)
   const [selectedStocks, setSelectedStocks] = useState<string[]>([])
   const [alertContacts, setAlertContacts] = useState<AlertContact[]>([
-    { name: "默认用户", email: "default@example.com", type: "email" }
+    { name: "Default User", email: "default@example.com", type: "email" }
   ])
   const [newContactName, setNewContactName] = useState("")
   const [newContactEmail, setNewContactEmail] = useState("")
@@ -314,22 +340,39 @@ export default function TasksPage() {
     setIsCreating(false)
   }
 
-  const generateMockData = (type: string, symbol?: string): DataItem => {
-    const baseValue = type === "industry" ? Math.random() * 5000 + 3000 :
-                     type === "etf" ? Math.random() * 100 + 50 :
-                     Math.random() * 1000 + 100
+  const generateMockData = (type: string, symbol?: string) => {
+    const getRandomChange = () => (Math.random() * 6 - 3).toFixed(2)
+    const isAbnormal = Math.random() < 0.2
 
-    const change = (Math.random() - 0.5) * (
-      type === "industry" ? 5 :
-      type === "etf" ? 3 :
-      10
-    )
-
-    const isAbnormal = Math.random() < (
-      type === "industry" ? 0.1 :
-      type === "etf" ? 0.15 :
-      0.2
-    )
+    if (type === "industry") {
+      const baseData = MOCK_INDUSTRY_DATA[Math.floor(Math.random() * MOCK_INDUSTRY_DATA.length)]
+      return {
+        ...baseData,
+        change: Number(getRandomChange()),
+        isAbnormal,
+        pe: Math.random() * 30 + 10,
+        pb: Math.random() * 5 + 1,
+        ps: Math.random() * 8 + 2,
+        dividend_yield: Math.random() * 5,
+        market_cap: Math.random() * 1000000000000,
+        volume: Math.floor(Math.random() * 10000000),
+        revenue_yoy: Number((Math.random() * 40 - 20).toFixed(2))
+      }
+    } else if (type === "etf") {
+      const baseData = MOCK_ETF_DATA[Math.floor(Math.random() * MOCK_ETF_DATA.length)]
+      return {
+        ...baseData,
+        change: Number(getRandomChange()),
+        isAbnormal,
+        pe: Math.random() * 25 + 12,
+        pb: Math.random() * 4 + 1.2,
+        ps: Math.random() * 6 + 1.5,
+        dividend_yield: Math.random() * 4,
+        market_cap: Math.random() * 500000000000,
+        volume: Math.floor(Math.random() * 5000000),
+        revenue_yoy: Number((Math.random() * 30 - 15).toFixed(2))
+      }
+    }
 
     let name = ""
     if (symbol) {
@@ -362,8 +405,8 @@ export default function TasksPage() {
     const baseData: DataItem = {
       symbol: symbol || `${type.toUpperCase()}-${Math.floor(Math.random() * 100)}`,
       name,
-      value: baseValue,
-      change,
+      value: Math.random() * 5000 + 3000,
+      change: Number(getRandomChange()),
       isAbnormal,
       pe,
       pe_percentile,
@@ -381,7 +424,7 @@ export default function TasksPage() {
         ...baseData,
         market_cap: Math.random() * 1000000000000,
         volume: Math.floor(Math.random() * 10000000),
-        revenue_yoy: (Math.random() - 0.3) * 100,
+        revenue_yoy: Number((Math.random() * 40 - 20).toFixed(2)),
       }
     }
 
@@ -497,14 +540,14 @@ export default function TasksPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">任务管理</h1>
+          <h1 className="text-2xl font-bold">Task Management</h1>
           <p className="text-sm text-muted-foreground">
-            管理数据拉取任务，配置更新频率和通知设置
+            Manage data pull tasks, configure update frequency and notification settings
           </p>
         </div>
         <Button onClick={() => setIsCreating(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          新建任务
+          Create New Task
         </Button>
       </div>
 
@@ -512,7 +555,7 @@ export default function TasksPage() {
         <div className="flex items-center gap-2 flex-1">
           <Search className="w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="搜索任务..."
+            placeholder="Search Tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="max-w-xs"
@@ -520,25 +563,25 @@ export default function TasksPage() {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="状态筛选" />
+            <SelectValue placeholder="Status Filter" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部状态</SelectItem>
-            <SelectItem value="running">运行中</SelectItem>
-            <SelectItem value="stopped">已停止</SelectItem>
-            <SelectItem value="error">错误</SelectItem>
-            <SelectItem value="completed">已完成</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="running">Running</SelectItem>
+            <SelectItem value="stopped">Stopped</SelectItem>
+            <SelectItem value="error">Error</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="类型筛选" />
+            <SelectValue placeholder="Type Filter" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部类型</SelectItem>
-            <SelectItem value="industry">行业指数</SelectItem>
-            <SelectItem value="etf">ETF数据</SelectItem>
-            <SelectItem value="stock">股票数据</SelectItem>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="industry">Industry Index</SelectItem>
+            <SelectItem value="etf">ETF Data</SelectItem>
+            <SelectItem value="stock">Stock Data</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -547,13 +590,13 @@ export default function TasksPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted">
-              <th className="p-4 text-left">任务名称</th>
-              <th className="p-4 text-left">类型</th>
-              <th className="p-4 text-left">状态</th>
-              <th className="p-4 text-left">上次运行</th>
-              <th className="p-4 text-left">下次运行</th>
-              <th className="p-4 text-left">更新频率</th>
-              <th className="p-4 text-left">操作</th>
+              <th className="p-4 text-left">Task Name</th>
+              <th className="p-4 text-left">Type</th>
+              <th className="p-4 text-left">Status</th>
+              <th className="p-4 text-left">Last Run</th>
+              <th className="p-4 text-left">Next Run</th>
+              <th className="p-4 text-left">Update Frequency</th>
+              <th className="p-4 text-left">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -567,7 +610,7 @@ export default function TasksPage() {
                     <div className="mt-2">
                       <Progress value={(task.progress.current / task.progress.total) * 100} />
                       <p className="text-sm text-muted-foreground mt-1">
-                        {task.progress.currentSymbol ? `处理: ${task.progress.currentSymbol}` : null}
+                        {task.progress.currentSymbol ? `Processing: ${task.progress.currentSymbol}` : null}
                         {task.progress.current}/{task.progress.total}
                       </p>
                     </div>
@@ -575,7 +618,7 @@ export default function TasksPage() {
                 </td>
                 <td className="p-4">{task.lastRun}</td>
                 <td className="p-4">{task.nextRun}</td>
-                <td className="p-4">{task.config.interval}分钟</td>
+                <td className="p-4">{task.config.interval} minutes</td>
                 <td className="p-4">
                   <div className="flex gap-2">
                     {task.status === "running" ? (
@@ -585,7 +628,7 @@ export default function TasksPage() {
                         onClick={() => handleStopTask(task.id)}
                       >
                         <StopCircle className="w-4 h-4 mr-2" />
-                        停止
+                        Stop
                       </Button>
                     ) : task.status === "completed" ? (
                       <Button
@@ -594,7 +637,7 @@ export default function TasksPage() {
                         onClick={() => router.push("/reviews")}
                       >
                         <History className="w-4 h-4 mr-2" />
-                        查看审批
+                        View Approval
                       </Button>
                     ) : task.status === "stopped" ? (
                       <Button
@@ -603,7 +646,7 @@ export default function TasksPage() {
                         onClick={() => handleStartTask(task.id)}
                       >
                         <PlayCircle className="w-4 h-4 mr-2" />
-                        启动
+                        Start
                       </Button>
                     ) : null}
                     <Button
@@ -612,7 +655,7 @@ export default function TasksPage() {
                       onClick={() => handleDeleteTask(task.id)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      删除
+                      Delete
                     </Button>
                   </div>
                 </td>
@@ -625,34 +668,34 @@ export default function TasksPage() {
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>新建任务</DialogTitle>
+            <DialogTitle>Create New Task</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>任务名称</Label>
+              <Label>Task Name</Label>
               <Input
                 value={newTaskName}
                 onChange={(e) => setNewTaskName(e.target.value)}
-                placeholder="请输入任务名称"
+                placeholder="Please enter the task name"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>任务类型</Label>
+              <Label>Task Type</Label>
               <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger>
-                  <SelectValue placeholder="请选择任务类型" />
+                  <SelectValue placeholder="Please select the task type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="industry">行业指数</SelectItem>
-                  <SelectItem value="etf">ETF数据</SelectItem>
-                  <SelectItem value="stock">股票数据</SelectItem>
+                  <SelectItem value="industry">Industry Index</SelectItem>
+                  <SelectItem value="etf">ETF Data</SelectItem>
+                  <SelectItem value="stock">Stock Data</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>更新频率（分钟）</Label>
+              <Label>Update Frequency (minutes)</Label>
               <Input
                 type="number"
                 value={updateInterval}
@@ -663,11 +706,11 @@ export default function TasksPage() {
 
             {selectedType === "stock" && (
               <div className="space-y-2">
-                <Label>选择股票</Label>
+                <Label>Select Stocks</Label>
                 <Command className="border rounded-md">
-                  <CommandInput placeholder="搜索股票..." />
+                  <CommandInput placeholder="Search Stocks..." />
                   <CommandList>
-                    <CommandEmpty>未找到股票</CommandEmpty>
+                    <CommandEmpty>No stocks found</CommandEmpty>
                     <CommandGroup>
                       {STOCKS.map(stock => (
                         <CommandItem
@@ -719,7 +762,7 @@ export default function TasksPage() {
 
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label>通知联系人</Label>
+                <Label>Notification Contacts</Label>
                 <Button
                   variant="outline"
                   size="sm"
@@ -727,19 +770,19 @@ export default function TasksPage() {
                   disabled={!newContactName || !newContactEmail}
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
-                  添加联系人
+                  Add Contact
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Input
                   value={newContactName}
                   onChange={(e) => setNewContactName(e.target.value)}
-                  placeholder="姓名"
+                  placeholder="Name"
                 />
                 <Input
                   value={newContactEmail}
                   onChange={(e) => setNewContactEmail(e.target.value)}
-                  placeholder="邮箱"
+                  placeholder="Email"
                 />
               </div>
               <div className="space-y-2">
@@ -766,13 +809,13 @@ export default function TasksPage() {
                 variant="outline"
                 onClick={() => setIsCreating(false)}
               >
-                取消
+                Cancel
               </Button>
               <Button
                 onClick={handleCreateTask}
                 disabled={!newTaskName || !selectedType}
               >
-                创建
+                Create
               </Button>
             </div>
           </div>

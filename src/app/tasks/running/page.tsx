@@ -17,7 +17,7 @@ export default function RunningTasksPage() {
   const [tasks] = useState<RunningTask[]>([
     {
       id: "industry-task",
-      name: "行业指数数据",
+      name: "Industry Index Data",
       type: "industry",
       startTime: "2024-01-23 14:30:00",
       nextUpdate: "2024-01-23 15:00:00",
@@ -25,7 +25,7 @@ export default function RunningTasksPage() {
     },
     {
       id: "etf-task",
-      name: "ETF数据",
+      name: "ETF Data",
       type: "etf",
       startTime: "2024-01-23 14:45:00",
       nextUpdate: "2024-01-23 15:00:00",
@@ -33,7 +33,7 @@ export default function RunningTasksPage() {
     },
     {
       id: "stock-task",
-      name: "股票数据",
+      name: "Stock Data",
       type: "stock",
       startTime: "2024-01-23 14:55:00",
       nextUpdate: "2024-01-23 15:00:00",
@@ -44,10 +44,10 @@ export default function RunningTasksPage() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">运行中任务</h1>
+        <h1 className="text-3xl font-bold">Running Tasks</h1>
         <Button>
           <RefreshCw className="w-4 h-4 mr-2" />
-          刷新
+          Refresh
         </Button>
       </div>
 
@@ -61,7 +61,7 @@ export default function RunningTasksPage() {
               <div>
                 <h3 className="text-lg font-semibold">{task.name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  开始时间: {task.startTime}
+                  Start Time: {task.startTime}
                 </p>
               </div>
               <Button variant="outline" size="sm">
@@ -72,7 +72,7 @@ export default function RunningTasksPage() {
 
             <div className="space-y-4">
               <div className="flex justify-between text-sm">
-                <span>下次更新: {task.nextUpdate}</span>
+                <span>Next Update: {task.nextUpdate}</span>
                 <span>{task.progress}%</span>
               </div>
 
@@ -88,4 +88,4 @@ export default function RunningTasksPage() {
       </div>
     </div>
   )
-} 
+}
