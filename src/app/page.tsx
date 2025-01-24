@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -72,9 +72,19 @@ const MOCK_STOCK_DATA: DataPoint[] = addMockHistory([
 const COLORS = ['#10B981', '#EF4444']
 
 export default function DashboardPage() {
+  const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("industry")
   const [searchQuery, setSearchQuery] = useState("")
   const [symbolFilter, setSymbolFilter] = useState<string>("all")
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // 在组件挂载前返回null或加载状态
+  if (!mounted) {
+    return null
+  }
 
   const getFilteredData = (data: DataPoint[]) => {
     return data.filter(item => {
@@ -318,7 +328,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="industry" value={activeTab} onValueChange={setActiveTab}>
         <div className="flex justify-between items-center mb-6">
           <TabsList>
             <TabsTrigger value="industry">Industry Index</TabsTrigger>

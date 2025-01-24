@@ -537,56 +537,59 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 sm:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Task Management</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold">Task Management</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage data pull tasks, configure update frequency and notification settings
           </p>
         </div>
-        <Button onClick={() => setIsCreating(true)}>
+        <Button onClick={() => setIsCreating(true)} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Create New Task
         </Button>
       </div>
 
-      <div className="flex gap-4 mb-6">
-        <div className="flex items-center gap-2 flex-1">
-          <Search className="w-4 h-4 text-muted-foreground" />
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search Tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-xs"
+            className="pl-9 w-full"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status Filter" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="running">Running</SelectItem>
-            <SelectItem value="stopped">Stopped</SelectItem>
-            <SelectItem value="error">Error</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Type Filter" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="industry">Industry Index</SelectItem>
-            <SelectItem value="etf">ETF Data</SelectItem>
-            <SelectItem value="stock">Stock Data</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="grid grid-cols-2 gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Status Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="running">Running</SelectItem>
+              <SelectItem value="stopped">Stopped</SelectItem>
+              <SelectItem value="error">Error</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Type Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="industry">Industry Index</SelectItem>
+              <SelectItem value="etf">ETF Data</SelectItem>
+              <SelectItem value="stock">Stock Data</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="border rounded-lg">
+      {/* 桌面端显示表格 */}
+      <div className="hidden md:block border rounded-lg">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted">
@@ -665,14 +668,101 @@ export default function TasksPage() {
         </table>
       </div>
 
+      {/* 移动端显示卡片 */}
+      <div className="grid gap-3 md:hidden">
+        {filteredTasks.map((task) => (
+          <div key={task.id} className="border rounded-lg p-3 space-y-3">
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium line-clamp-1">{task.name}</h3>
+                  <p className="text-sm text-muted-foreground capitalize">{task.type}</p>
+                </div>
+                {getStatusBadge(task.status)}
+              </div>
+            </div>
+
+            {task.progress && (
+              <div className="space-y-2 bg-muted/50 p-2 rounded">
+                <Progress value={(task.progress.current / task.progress.total) * 100} />
+                <p className="text-sm text-muted-foreground">
+                  {task.progress.currentSymbol && (
+                    <span className="block">Processing: {task.progress.currentSymbol}</span>
+                  )}
+                  <span>Progress: {task.progress.current}/{task.progress.total}</span>
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm py-2 border-y">
+              <div>
+                <p className="text-muted-foreground text-xs">Last Run</p>
+                <p className="font-medium">{task.lastRun}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Next Run</p>
+                <p className="font-medium">{task.nextRun}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-muted-foreground text-xs">Update Frequency</p>
+                <p className="font-medium">{task.config.interval} minutes</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              {task.status === "running" ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStopTask(task.id)}
+                  className="flex-1"
+                >
+                  <StopCircle className="w-4 h-4 mr-1.5" />
+                  Stop
+                </Button>
+              ) : task.status === "completed" ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/reviews")}
+                  className="flex-1"
+                >
+                  <History className="w-4 h-4 mr-1.5" />
+                  View Approval
+                </Button>
+              ) : task.status === "stopped" ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStartTask(task.id)}
+                  className="flex-1"
+                >
+                  <PlayCircle className="w-4 h-4 mr-1.5" />
+                  Start
+                </Button>
+              ) : null}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteTask(task.id)}
+                className="flex-1"
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Task</DialogTitle>
+        <DialogContent className="max-w-[95vw] w-full sm:max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl">Create New Task</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Task Name</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Task Name</Label>
               <Input
                 value={newTaskName}
                 onChange={(e) => setNewTaskName(e.target.value)}
@@ -680,10 +770,10 @@ export default function TasksPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Task Type</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Task Type</Label>
               <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Please select the task type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -694,8 +784,8 @@ export default function TasksPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Update Frequency (minutes)</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Update Frequency (minutes)</Label>
               <Input
                 type="number"
                 value={updateInterval}
@@ -705,11 +795,11 @@ export default function TasksPage() {
             </div>
 
             {selectedType === "stock" && (
-              <div className="space-y-2">
-                <Label>Select Stocks</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Select Stocks</Label>
                 <Command className="border rounded-md">
                   <CommandInput placeholder="Search Stocks..." />
-                  <CommandList>
+                  <CommandList className="max-h-[150px] sm:max-h-[200px]">
                     <CommandEmpty>No stocks found</CommandEmpty>
                     <CommandGroup>
                       {STOCKS.map(stock => (
@@ -724,6 +814,7 @@ export default function TasksPage() {
                               return [...prev, stock.value];
                             });
                           }}
+                          className="py-2"
                         >
                           <div className="flex items-center gap-2">
                             <div className={cn(
@@ -740,14 +831,14 @@ export default function TasksPage() {
                   </CommandList>
                 </Command>
                 {selectedStocks.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-1.5 mt-2">
                     {selectedStocks.map(stockValue => {
                       const stock = STOCKS.find(s => s.value === stockValue);
                       return (
                         <Badge
                           key={stockValue}
                           variant="secondary"
-                          className="cursor-pointer"
+                          className="cursor-pointer py-1"
                           onClick={() => setSelectedStocks(prev => prev.filter(s => s !== stockValue))}
                         >
                           {stock?.label}
@@ -760,20 +851,20 @@ export default function TasksPage() {
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <Label>Notification Contacts</Label>
+                <Label className="text-sm">Notification Contacts</Label>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleAddContact}
                   disabled={!newContactName || !newContactEmail}
                 >
-                  <UserPlus className="w-4 h-4 mr-2" />
+                  <UserPlus className="w-4 h-4 mr-1.5" />
                   Add Contact
                 </Button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <Input
                   value={newContactName}
                   onChange={(e) => setNewContactName(e.target.value)}
@@ -785,17 +876,18 @@ export default function TasksPage() {
                   placeholder="Email"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 mt-2">
                 {alertContacts.map((contact, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 border rounded">
+                  <div key={index} className="flex justify-between items-center p-2 border rounded bg-muted/50">
                     <div>
-                      <p className="font-medium">{contact.name}</p>
-                      <p className="text-sm text-muted-foreground">{contact.email}</p>
+                      <p className="font-medium text-sm">{contact.name}</p>
+                      <p className="text-xs text-muted-foreground">{contact.email}</p>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveContact(index)}
+                      className="h-8 w-8 p-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -804,16 +896,18 @@ export default function TasksPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex gap-2 pt-4 sticky bottom-0 bg-background">
               <Button
                 variant="outline"
                 onClick={() => setIsCreating(false)}
+                className="flex-1"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreateTask}
                 disabled={!newTaskName || !selectedType}
+                className="flex-1"
               >
                 Create
               </Button>
